@@ -292,6 +292,29 @@ h6 {
   width: auto;        /* don’t stretch */
 }
 
+/* Ensure logo image scales correctly even if .header wrapper is missing
+   (some pages/commented HTML may remove the .header context). */
+.logo img {
+  max-height: 60px; /* desktop default */
+  height: auto;
+  width: auto;
+  display: block;
+}
+
+/* Reduce logo size on small viewports (phones) */
+@media (max-width: 576px) {
+  .logo img {
+    max-height: 40px; /* adjust as needed (40px is a comfortable size) */
+  }
+}
+
+/* Extra-small devices: make it even smaller if needed */
+@media (max-width: 360px) {
+  .logo img {
+    max-height: 34px;
+  }
+}
+
 .header .logo h1,
 .header .logo span {
   font-size: 30px;
@@ -479,6 +502,72 @@ h6 {
   }
 }
 
+/* Custom hamburger / mobile-nav-toggle redesign
+   - Uses a <button class="mobile-nav-toggle"> with a child <span class="bar">.
+   - Animates three bars into an X when the nav is active (mobile-nav-active).
+   - Keeps accessibility (button element) and preserves existing JS hooks.
+*/
+.mobile-nav-toggle {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin-left: 12px;
+  border: 0;
+  background: color-mix(in srgb, var(--surface-color), transparent 10%);
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease;
+  color: var(--nav-color); /* fallback for SVG/icon children */
+}
+
+.mobile-nav-toggle:focus { outline: 2px solid color-mix(in srgb, var(--accent-color), transparent 30%); outline-offset: 2px; }
+
+.mobile-nav-toggle .bar,
+.mobile-nav-toggle .bar::before,
+.mobile-nav-toggle .bar::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 2px;
+  background: var(--nav-color);
+  border-radius: 2px;
+  transition: transform 0.22s ease, opacity 0.18s ease, top 0.22s ease;
+}
+
+.mobile-nav-toggle .bar { top: 50%; transform: translate(-50%, -50%); }
+.mobile-nav-toggle .bar::before { top: calc(50% - 7px); }
+.mobile-nav-toggle .bar::after { top: calc(50% + 7px); }
+
+/* Hover and active feedback */
+.mobile-nav-toggle:hover { background: color-mix(in srgb, var(--accent-color), transparent 92%); }
+
+/* When mobile nav is open the body (or html root) usually gets mobile-nav-active -- template uses .mobile-nav-active */
+.mobile-nav-active .mobile-nav-toggle .bar {
+  background: transparent; /* hide center bar */
+}
+.mobile-nav-active .mobile-nav-toggle .bar::before {
+  top: 50%;
+  transform: translateX(-50%) rotate(45deg);
+}
+.mobile-nav-active .mobile-nav-toggle .bar::after {
+  top: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+}
+
+/* Slightly smaller button on very small screens to save space */
+@media (max-width: 420px) {
+  .mobile-nav-toggle { width: 40px; height: 40px; margin-left: 8px; }
+  .mobile-nav-toggle .bar,
+  .mobile-nav-toggle .bar::before,
+  .mobile-nav-toggle .bar::after { width: 16px; }
+}
+
 /* Mobile Navigation */
 @media (max-width: 1199px) {
   .mobile-nav-toggle {
@@ -603,6 +692,90 @@ h6 {
   .mobile-nav-active .navmenu>ul {
     display: block;
   }
+}
+
+/* Redesigned mobile navigation panel (centered card with backdrop) */
+@media (max-width: 1199px) {
+  /* dim the page behind the menu */
+  .mobile-nav-active::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 9996; /* below the nav panel */
+    backdrop-filter: blur(2px);
+  }
+
+  /* Style the menu as a compact dropdown box anchored to top-right (like the provided design) */
+  .navmenu>ul {
+    position: fixed !important;
+    top: 56px;            /* below the header */
+    right: 12px;          /* anchored to the right */
+    left: auto;           /* don't stretch to left */
+    transform: translateY(-6px);
+    width: 260px;         /* compact width similar to the example */
+    max-width: calc(100% - 32px);
+    bottom: auto;         /* auto height */
+    margin: 0;
+    padding: 12px 10px;
+    border-radius: 10px;
+    background: var(--surface-color);
+    box-shadow: 0 14px 36px rgba(0,0,0,0.22);
+    border: 1px solid color-mix(in srgb, var(--default-color), transparent 92%);
+    overflow: visible;    /* let content define height */
+    z-index: 9997; /* above the backdrop */
+    display: none; /* default hidden, shown when mobile-nav-active is added */
+    opacity: 0;
+    transition: transform 220ms cubic-bezier(.2,.9,.3,1), opacity 180ms ease;
+  }
+
+  /* Visible state - small dropdown */
+  .mobile-nav-active .navmenu>ul {
+    display: block;
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  /* Make the close toggle sit inside the card at top-right */
+  .navmenu .mobile-nav-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 9998;
+    background: transparent;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Larger spacing and typography for menu items */
+  .navmenu>ul li {
+    display: block;
+    width: 100%;
+    padding: 18px 0; /* more vertical tappable area */
+    border-bottom: none;
+  }
+
+  .navmenu>ul li a {
+    display: block;
+    font-size: 22px;        /* increased size to better fill the panel */
+    font-weight: 700;       /* slightly bolder for legibility */
+    padding: 12px 6px;      /* balanced vertical padding and small horizontal padding */
+    color: var(--nav-color);
+    text-align: center;     /* center items horizontally in the panel */
+    line-height: 1.4;       /* more breathing room between lines */
+  }
+
+  /* Subtle top area for a small header (logo/brand) inside panel */
+  .navmenu>ul::before {
+    content: "";
+    display: block;
+    height: 64px; /* reserves space at top for branding if needed */
+    margin-bottom: 6px;
+  }
+
+  /* make scrollbar thinner and visible on mobile if content is long */
+  .navmenu>ul::-webkit-scrollbar { width: 8px; }
+  .navmenu>ul::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--default-color), transparent 85%); border-radius: 6px; }
 }
 
 /*--------------------------------------------------------------
